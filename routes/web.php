@@ -32,7 +32,7 @@ Route::get('/track/{orderNumber?}', function ($orderNumber = null) {
 // Kitchen Display System Portal
 Route::get('/kitchen', function () {
     if (!Auth::check() || !Auth::user()->isKitchen()) {
-        return redirect('/?auth=login&intended=/kitchen')->with('error', 'Kitchen access requires authorized staff login.');
+        return redirect('/login?intended=' . urlencode('/kitchen'))->with('error', 'Kitchen access requires authorized staff login.');
     }
     $restaurant = Restaurant::first();
     return view('kitchen.index', compact('restaurant'));
@@ -41,15 +41,20 @@ Route::get('/kitchen', function () {
 // Admin Management Portal
 Route::get('/admin/{section?}', function ($section = 'dashboard') {
     if (!Auth::check() || !Auth::user()->isAdmin()) {
-        return redirect('/?auth=login&intended=/admin')->with('error', 'Administrator login required.');
+        return redirect('/login?intended=' . urlencode('/admin/' . $section))->with('error', 'Administrator login required.');
     }
     $restaurant = Restaurant::first();
     return view('admin.index', compact('restaurant', 'section'));
 })->where('section', '.*')->name('admin');
 
-// Login redirect helper
+// Dedicated Authentication Page
 Route::get('/login', function (Request $request) {
-    return redirect('/?auth=login&intended=' . urlencode($request->query('intended', '/')));
+    $intended = $request->query('intended', '/');
+    if (Auth::check()) {
+        return redirect($intended);
+    }
+    $restaurant = Restaurant::first();
+    return view('auth.login', compact('restaurant', 'intended'));
 })->name('login');
 
 /*

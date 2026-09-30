@@ -95,8 +95,6 @@
     <!-- React 18 & ReactDOM 18 from CDN -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel Standalone for in-browser JSX parsing without npm build step -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Chart.js for analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -152,6 +150,21 @@
         window.__CSRF_TOKEN__ = "{{ csrf_token() }}";
         window.__INITIAL_AUTH__ = @json($initialAuth);
         window.__RESTAURANT__ = @json($restaurant ?? null);
+
+        // Global fetch interceptor: injects CSRF token and ngrok bypass header on all AJAX calls
+        const _nativeFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            options = options || {};
+            options.headers = options.headers || {};
+            if (typeof options.headers.set === 'function') {
+                options.headers.set('ngrok-skip-browser-warning', 'true');
+                if (window.__CSRF_TOKEN__) options.headers.set('X-CSRF-TOKEN', window.__CSRF_TOKEN__);
+            } else {
+                options.headers['ngrok-skip-browser-warning'] = 'true';
+                if (window.__CSRF_TOKEN__) options.headers['X-CSRF-TOKEN'] = window.__CSRF_TOKEN__;
+            }
+            return _nativeFetch(url, options);
+        };
     </script>
 </head>
 <body class="min-h-screen flex flex-col bg-stone-50 text-stone-900 antialiased selection:bg-orange-500 selection:text-white">
