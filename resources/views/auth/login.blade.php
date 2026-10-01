@@ -36,68 +36,9 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div class="bg-stone-900/90 border border-stone-800 py-8 px-6 shadow-2xl rounded-3xl sm:px-10 backdrop-blur-md">
-            
-            <!-- 1-CLICK DEMO LOGIN BUTTONS -->
-            <div class="mb-8">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-stone-400">1-Click Instant Demo Login</span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-950 text-emerald-300 border border-emerald-800">
-                        ⚡ Instant Access
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-1 gap-2.5">
-                    <button type="button" onclick="quickLogin('admin')" 
-                            class="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-medium text-xs shadow-md transition transform active:scale-98">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-black/20 flex items-center justify-center">
-                                <i data-lucide="shield-check" class="w-4 h-4 text-white"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-bold">Sign In as Administrator</div>
-                                <div class="text-[10px] text-orange-100">Chef Vikram Anand • Full Control</div>
-                            </div>
-                        </div>
-                        <i data-lucide="arrow-right" class="w-4 h-4 opacity-80"></i>
-                    </button>
-
-                    <button type="button" onclick="quickLogin('kitchen')" 
-                            class="w-full flex items-center justify-between p-3 rounded-2xl bg-stone-800 hover:bg-stone-700/80 border border-stone-700 text-white font-medium text-xs transition transform active:scale-98">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                                <i data-lucide="chef-hat" class="w-4 h-4 text-amber-400"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-bold text-stone-200">Sign In as Kitchen Lead</div>
-                                <div class="text-[10px] text-stone-400">Chef Ananya Sharma • KDS Screen</div>
-                            </div>
-                        </div>
-                        <i data-lucide="arrow-right" class="w-4 h-4 text-stone-400"></i>
-                    </button>
-
-                    <button type="button" onclick="quickLogin('customer')" 
-                            class="w-full flex items-center justify-between p-3 rounded-2xl bg-stone-800 hover:bg-stone-700/80 border border-stone-700 text-white font-medium text-xs transition transform active:scale-98">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                                <i data-lucide="user" class="w-4 h-4 text-orange-400"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-bold text-stone-200">Sign In as Customer</div>
-                                <div class="text-[10px] text-stone-400">Priya Patel • Pre-order & Cart</div>
-                            </div>
-                        </div>
-                        <i data-lucide="arrow-right" class="w-4 h-4 text-stone-400"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-stone-800"></div>
-                </div>
-                <div class="relative flex justify-center text-xs">
-                    <span class="px-3 bg-stone-900 text-stone-500 uppercase tracking-wider font-semibold">Or Email & Password</span>
-                </div>
+            <div class="mb-4 text-center">
+                <h2 class="text-xl font-serif font-bold text-white">Welcome Back</h2>
+                <p class="text-xs text-stone-400 mt-1">Please sign in to your account</p>
             </div>
 
             <!-- MANUAL LOGIN FORM -->

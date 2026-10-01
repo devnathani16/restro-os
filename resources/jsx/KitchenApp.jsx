@@ -1,10 +1,14 @@
 const { useState, useEffect, useMemo } = React;
 
 function KitchenDisplay() {
-    const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const todayStr = useMemo(() => {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }, []);
     const [selectedDate, setSelectedDate] = useState(todayStr);
     const [activeSlots, setActiveSlots] = useState([]);
     const [rawOrders, setRawOrders] = useState([]);
+    const [restaurant, setRestaurant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
     const [audioEnabled, setAudioEnabled] = useState(true);
@@ -30,6 +34,7 @@ function KitchenDisplay() {
             if (data.success) {
                 setActiveSlots(data.grouped_slots || []);
                 setRawOrders(data.raw_orders || []);
+                if (data.restaurant) setRestaurant(data.restaurant);
             }
         })
         .catch(err => {
@@ -40,6 +45,7 @@ function KitchenDisplay() {
 
     // Initial load + Polling every 8 seconds
     useEffect(() => {
+        setLoading(true);
         fetchKitchenOrders();
         const poll = setInterval(fetchKitchenOrders, 8000);
         return () => clearInterval(poll);
@@ -99,11 +105,15 @@ function KitchenDisplay() {
             <header className="bg-stone-900 border-b border-stone-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-bold text-lg text-white">
-                            <i data-lucide="chef-hat" className="w-6 h-6"></i>
-                        </div>
+                        {restaurant && restaurant.logo ? (
+                            <img src={restaurant.logo} alt="Logo" className="w-10 h-10 rounded-xl object-cover" />
+                        ) : (
+                            <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-bold text-lg text-white">
+                                <i data-lucide="chef-hat" className="w-6 h-6"></i>
+                            </div>
+                        )}
                         <div>
-                            <h1 className="text-lg font-bold text-white tracking-wide">KITCHEN PREP DISPLAY</h1>
+                            <h1 className="text-lg font-bold text-white tracking-wide">{restaurant ? restaurant.name.toUpperCase() : 'KITCHEN DISPLAY'}</h1>
                             <p className="text-xs text-orange-400 font-mono">Bistro Line Ops • Pre-Order Queue</p>
                         </div>
                     </div>
@@ -133,6 +143,12 @@ function KitchenDisplay() {
 
                 {/* Date Switcher & Links */}
                 <div className="flex items-center gap-2">
+                    <input 
+                        type="date" 
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="bg-stone-950 border border-stone-800 text-stone-300 px-3 py-2 rounded-xl text-sm font-mono focus:outline-none focus:border-amber-500"
+                    />
                     <button onClick={() => setAudioEnabled(!audioEnabled)} className={`p-2.5 rounded-xl border transition ${audioEnabled ? 'border-amber-500/60 bg-amber-500/20 text-amber-400' : 'border-stone-800 bg-stone-900 text-stone-500'}`} title="Toggle Audio Chime">
                         <i data-lucide={audioEnabled ? "volume-2" : "volume-x"} className="w-4 h-4"></i>
                     </button>

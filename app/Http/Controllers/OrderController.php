@@ -382,6 +382,18 @@ class OrderController extends Controller
 
             AuditLog::record(Auth::user(), 'created', 'order', (string) $order->id, "Order {$order->order_number} created for {$order->customer_name}. Total: ₹{$order->final_total}");
 
+            // Publish instantly to Redis for Kitchen KDS / Live Listeners
+            try {
+                \Illuminate\Support\Facades\Redis::publish('kds.orders', json_encode([
+                    'event' => 'NewOrder',
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'timestamp' => now()->toIso8601String()
+                ]));
+            } catch (\Exception $e) {
+                // Fail silently if Redis is not running
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order created successfully! Please proceed to payment or confirmation.',

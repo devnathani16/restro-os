@@ -6,9 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\CustomizationGroup;
-use App\Models\CustomizationOption;
 use App\Models\MenuItem;
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Restaurant;
 use App\Models\RestaurantHour;
@@ -88,7 +86,7 @@ class AdminController extends Controller
 
         // Filter by date quick links
         if ($request->filled('date_filter')) {
-            match($request->query('date_filter')) {
+            match ($request->query('date_filter')) {
                 'today' => $query->whereDate('arrival_date', $today),
                 'tomorrow' => $query->whereDate('arrival_date', $tomorrow),
                 'upcoming' => $query->whereDate('arrival_date', '>=', $today),
@@ -117,9 +115,9 @@ class AdminController extends Controller
             $s = trim($request->query('search'));
             $query->where(function ($q) use ($s) {
                 $q->where('order_number', 'like', "%{$s}%")
-                  ->orWhere('customer_name', 'like', "%{$s}%")
-                  ->orWhere('customer_phone', 'like', "%{$s}%")
-                  ->orWhere('customer_email', 'like', "%{$s}%");
+                    ->orWhere('customer_name', 'like', "%{$s}%")
+                    ->orWhere('customer_phone', 'like', "%{$s}%")
+                    ->orWhere('customer_email', 'like', "%{$s}%");
             });
         }
 
@@ -146,15 +144,15 @@ class AdminController extends Controller
         $oldStatus = $order->order_status;
         $order->order_status = $validated['status'];
 
-        if (!empty($validated['payment_status'])) {
+        if (! empty($validated['payment_status'])) {
             $order->payment_status = $validated['payment_status'];
         }
 
-        if ($validated['status'] === 'preparing' && !$order->preparation_started_at) {
+        if ($validated['status'] === 'preparing' && ! $order->preparation_started_at) {
             $order->preparation_started_at = now();
-        } elseif ($validated['status'] === 'ready' && !$order->ready_at) {
+        } elseif ($validated['status'] === 'ready' && ! $order->ready_at) {
             $order->ready_at = now();
-        } elseif ($validated['status'] === 'completed' && !$order->completed_at) {
+        } elseif ($validated['status'] === 'completed' && ! $order->completed_at) {
             $order->completed_at = now();
         } elseif ($validated['status'] === 'cancelled') {
             $order->cancellation_reason = $validated['notes'] ?? 'Cancelled by administrator.';
@@ -208,11 +206,11 @@ class AdminController extends Controller
             'customization_group_ids.*' => 'exists:customization_groups,id',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']) . '-' . rand(100, 999);
+        $validated['slug'] = Str::slug($validated['name']).'-'.rand(100, 999);
 
         $menuItem = MenuItem::create($validated);
 
-        if (!empty($validated['customization_group_ids'])) {
+        if (! empty($validated['customization_group_ids'])) {
             $menuItem->customizationGroups()->sync($validated['customization_group_ids']);
         }
 
@@ -284,6 +282,7 @@ class AdminController extends Controller
     public function categories()
     {
         $categories = Category::withCount('menuItems')->orderBy('display_order')->get();
+
         return response()->json(['success' => true, 'categories' => $categories]);
     }
 
@@ -297,7 +296,7 @@ class AdminController extends Controller
             'active' => 'boolean',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']) . '-' . rand(10, 99);
+        $validated['slug'] = Str::slug($validated['name']).'-'.rand(10, 99);
         $category = Category::create($validated);
 
         AuditLog::record(Auth::user(), 'created', 'category', (string) $category->id, "Created category: {$category->name}");
@@ -348,6 +347,7 @@ class AdminController extends Controller
     public function customizationGroups()
     {
         $groups = CustomizationGroup::with('options')->get();
+
         return response()->json(['success' => true, 'groups' => $groups]);
     }
 
@@ -443,6 +443,7 @@ class AdminController extends Controller
     {
         $group = CustomizationGroup::findOrFail($id);
         $group->delete();
+
         return response()->json(['success' => true, 'message' => 'Customization group deleted.']);
     }
 
@@ -452,6 +453,7 @@ class AdminController extends Controller
     public function coupons()
     {
         $coupons = Coupon::latest()->get();
+
         return response()->json(['success' => true, 'coupons' => $coupons]);
     }
 
@@ -504,6 +506,7 @@ class AdminController extends Controller
     {
         $coupon = Coupon::findOrFail($id);
         $coupon->delete();
+
         return response()->json(['success' => true, 'message' => 'Coupon deleted.']);
     }
 
@@ -512,17 +515,42 @@ class AdminController extends Controller
      */
     public function customers(Request $request)
     {
-        $customers = User::where('role', 'customer')
-            ->withCount('orders')
+        // Show all users so admin can manage roles (upgrade/downgrade)
+        $customers = User::withCount('orders')
             ->withSum(['orders' => function ($q) {
                 $q->where('payment_status', 'paid');
             }], 'final_total')
             ->latest()
-            ->paginate(20);
+            ->paginate(50);
 
         return response()->json([
             'success' => true,
             'customers' => $customers,
+        ]);
+    }
+
+    public function updateUserRole(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'role' => 'required|in:customer,kitchen_staff,admin',
+        ]);
+
+        // Prevent self-demotion
+        if ($user->id === Auth::id() && $validated['role'] !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'You cannot demote yourself.'], 403);
+        }
+
+        $oldRole = $user->role;
+        $user->role = $validated['role'];
+        $user->save();
+
+        AuditLog::record(Auth::user(), 'updated', 'user', (string) $user->id, "Changed user {$user->email} role from {$oldRole} to {$validated['role']}");
+
+        return response()->json([
+            'success' => true,
+            'message' => "User role updated to {$validated['role']}.",
         ]);
     }
 
@@ -589,6 +617,7 @@ class AdminController extends Controller
     public function auditLogs(Request $request)
     {
         $logs = AuditLog::with('user')->latest()->paginate(30);
+
         return response()->json(['success' => true, 'logs' => $logs]);
     }
 
@@ -651,7 +680,7 @@ class AdminController extends Controller
 
         $restaurant->update($validated);
 
-        if (!empty($validated['hours'])) {
+        if (! empty($validated['hours'])) {
             foreach ($validated['hours'] as $h) {
                 RestaurantHour::where('id', $h['id'])->update([
                     'opening_time' => $h['opening_time'],
@@ -661,7 +690,7 @@ class AdminController extends Controller
             }
         }
 
-        if (!empty($validated['time_slots'])) {
+        if (! empty($validated['time_slots'])) {
             foreach ($validated['time_slots'] as $ts) {
                 TimeSlot::where('id', $ts['id'])->update([
                     'maximum_orders' => $ts['maximum_orders'],
@@ -670,7 +699,7 @@ class AdminController extends Controller
             }
         }
 
-        AuditLog::record(Auth::user(), 'settings_updated', 'restaurant_settings', (string) $restaurant->id, "Updated restaurant settings and policies.");
+        AuditLog::record(Auth::user(), 'settings_updated', 'restaurant_settings', (string) $restaurant->id, 'Updated restaurant settings and policies.');
 
         return response()->json([
             'success' => true,

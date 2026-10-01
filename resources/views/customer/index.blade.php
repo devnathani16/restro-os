@@ -15,6 +15,6 @@
 </div>
 
 @push('scripts')
-<script src="{{ asset('js/customer-app.js') }}?v={{ filemtime(public_path('js/customer-app.js')) }}"></script>
+<script src="/js/customer-app.js?v={{ filemtime(public_path('js/customer-app.js')) }}"></script>
 @endpush
 @endsection

@@ -62,7 +62,10 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Order Ahead Arrival Scheduling
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }, []);
   const [arrivalDate, setArrivalDate] = useState(todayStr);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [diningOption, setDiningOption] = useState('dine_in'); // 'dine_in' or 'takeaway'
@@ -97,6 +100,9 @@ function App() {
     });
     setTimeout(() => setToast(null), 4000);
   };
+
+  // Mobile Offcanvas Menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Legal / Policy Modal
   const [legalModal, setLegalModal] = useState(null); // 'privacy', 'terms', 'refund'
@@ -616,35 +622,7 @@ function App() {
   }, [cart]);
   return /*#__PURE__*/React.createElement("div", {
     className: "min-h-screen flex flex-col bg-stone-50"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-stone-900 text-stone-300 text-xs py-1.5 px-4 border-b border-stone-800 flex flex-wrap items-center justify-between gap-2"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "flex h-2 w-2 relative"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
-  }), /*#__PURE__*/React.createElement("span", {
-    className: "relative inline-flex rounded-full h-2 w-2 bg-emerald-500"
-  })), /*#__PURE__*/React.createElement("span", {
-    className: "font-medium text-stone-200"
-  }, "Live Production Preview Mode"), /*#__PURE__*/React.createElement("span", {
-    className: "hidden sm:inline text-stone-400"
-  }, "\u2014 Test 1-click roles:")), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => handleQuickLogin('customer'),
-    className: "bg-stone-800 hover:bg-stone-700 text-orange-400 px-2.5 py-1 rounded text-xs font-medium transition border border-stone-700"
-  }, "Customer (Priya)"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => handleQuickLogin('kitchen'),
-    className: "bg-stone-800 hover:bg-stone-700 text-amber-400 px-2.5 py-1 rounded text-xs font-medium transition border border-stone-700"
-  }, "Kitchen Display Staff"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => handleQuickLogin('admin'),
-    className: "bg-orange-600 hover:bg-orange-500 text-white px-2.5 py-1 rounded text-xs font-medium transition shadow-sm"
-  }, "Admin Dashboard"), auth.authenticated && /*#__PURE__*/React.createElement("button", {
-    onClick: handleLogout,
-    className: "text-stone-400 hover:text-white px-1.5 py-1 text-xs"
-  }, "Log out"))), /*#__PURE__*/React.createElement("header", {
+  }, /*#__PURE__*/React.createElement("header", {
     className: "sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 transition-all shadow-sm"
   }, /*#__PURE__*/React.createElement("div", {
     className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between"
@@ -687,19 +665,19 @@ function App() {
   }, /*#__PURE__*/React.createElement("i", {
     "data-lucide": "compass",
     className: "w-3.5 h-3.5"
-  }), " Track Order"), /*#__PURE__*/React.createElement("a", {
-    href: "/login?intended=%2Fkitchen",
+  }), " Track Order"), auth.authenticated && (auth.user.role === 'admin' || auth.user.role === 'kitchen_staff') && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("a", {
+    href: "/kitchen",
     className: "hover:text-amber-700 transition flex items-center gap-1 text-xs px-2.5 py-1 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 font-medium"
   }, /*#__PURE__*/React.createElement("i", {
     "data-lucide": "chef-hat",
     className: "w-3.5 h-3.5"
-  }), " Kitchen KDS"), /*#__PURE__*/React.createElement("a", {
-    href: "/login?intended=%2Fadmin",
+  }), " Kitchen KDS"), auth.user.role === 'admin' && /*#__PURE__*/React.createElement("a", {
+    href: "/admin",
     className: "hover:text-orange-700 transition flex items-center gap-1 text-xs px-2.5 py-1 bg-orange-50 text-orange-800 rounded-lg border border-orange-200 font-medium"
   }, /*#__PURE__*/React.createElement("i", {
     "data-lucide": "shield",
     className: "w-3.5 h-3.5"
-  }), " Admin Portal")), /*#__PURE__*/React.createElement("div", {
+  }), " Admin Portal"))), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-3"
   }, auth.authenticated ? /*#__PURE__*/React.createElement("button", {
     onClick: () => {
@@ -717,7 +695,7 @@ function App() {
       setAuthMode('login');
       setShowAuthModal(true);
     },
-    className: "text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-2"
+    className: "hidden sm:inline-flex text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-2"
   }, "Sign In"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setIsCartOpen(true),
     className: "relative bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-full font-medium text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition transform active:scale-95"
@@ -728,6 +706,183 @@ function App() {
     className: "hidden sm:inline"
   }, "Your Tray"), totalCartItemsCount > 0 && /*#__PURE__*/React.createElement("span", {
     className: "bg-white text-orange-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center"
+  }, totalCartItemsCount)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setIsMobileMenuOpen(true),
+    className: "md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition active:scale-95",
+    "aria-label": "Open navigation menu"
+  }, /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    className: "w-5 h-5",
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }, /*#__PURE__*/React.createElement("path", {
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    d: "M4 6h16M4 12h16M4 18h16"
+  })))))), isMobileMenuOpen && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 z-50 md:hidden"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "absolute inset-0 bg-stone-900/60 backdrop-blur-sm",
+    onClick: () => setIsMobileMenuOpen(false),
+    style: {
+      animation: 'fadeIn 0.2s ease-out'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "absolute top-0 right-0 h-full w-[85%] max-w-sm bg-white/95 backdrop-blur-xl shadow-2xl flex flex-col",
+    style: {
+      animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between p-5 border-b border-stone-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-10 h-10 rounded-xl overflow-hidden bg-orange-100 flex items-center justify-center"
+  }, /*#__PURE__*/React.createElement("img", {
+    src: restaurant.logo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80",
+    alt: "Logo",
+    className: "w-full h-full object-cover"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+    className: "text-base font-serif font-bold text-stone-900 block leading-tight"
+  }, restaurant.name || 'Spice & Hearth Bistro'), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] text-orange-600 font-medium tracking-wide"
+  }, "Pre-Order & Dine"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setIsMobileMenuOpen(false),
+    className: "w-9 h-9 rounded-xl bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-600 transition",
+    "aria-label": "Close menu"
+  }, /*#__PURE__*/React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    className: "w-5 h-5",
+    fill: "none",
+    viewBox: "0 0 24 24",
+    stroke: "currentColor",
+    strokeWidth: "2"
+  }, /*#__PURE__*/React.createElement("path", {
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    d: "M6 18L18 6M6 6l12 12"
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "px-5 pt-4"
+  }, auth.authenticated ? /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 p-3 rounded-xl bg-orange-50 border border-orange-100"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-bold text-sm"
+  }, auth.user.name.charAt(0).toUpperCase()), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-w-0"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-semibold text-stone-900 truncate"
+  }, auth.user.name), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-stone-500 truncate"
+  }, auth.user.email))) : /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIsMobileMenuOpen(false);
+      setAuthMode('login');
+      setShowAuthModal(true);
+    },
+    className: "w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 hover:border-orange-200 transition"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "user-plus",
+    className: "w-5 h-5"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "text-left"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-sm font-semibold text-stone-900"
+  }, "Sign In / Register"), /*#__PURE__*/React.createElement("p", {
+    className: "text-xs text-stone-500"
+  }, "Track orders & earn rewards")))), /*#__PURE__*/React.createElement("nav", {
+    className: "flex-1 overflow-y-auto px-5 pt-5 pb-4 space-y-1"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-[10px] font-bold uppercase tracking-widest text-stone-400 px-3 pb-2"
+  }, "Navigate"), /*#__PURE__*/React.createElement("a", {
+    href: "#order-ahead",
+    onClick: () => setIsMobileMenuOpen(false),
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-orange-600 bg-orange-50 font-semibold text-sm transition hover:bg-orange-100"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "calendar-clock",
+    className: "w-5 h-5"
+  }), /*#__PURE__*/React.createElement("span", null, "Order Ahead"), /*#__PURE__*/React.createElement("span", {
+    className: "ml-auto bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"
+  }, "NEW")), /*#__PURE__*/React.createElement("a", {
+    href: "#menu",
+    onClick: () => setIsMobileMenuOpen(false),
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "utensils-crossed",
+    className: "w-5 h-5 text-stone-400"
+  }), /*#__PURE__*/React.createElement("span", null, "Food Menu")), /*#__PURE__*/React.createElement("a", {
+    href: "#story",
+    onClick: () => setIsMobileMenuOpen(false),
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "book-open",
+    className: "w-5 h-5 text-stone-400"
+  }), /*#__PURE__*/React.createElement("span", null, "Our Craft")), /*#__PURE__*/React.createElement("a", {
+    href: "#reviews",
+    onClick: () => setIsMobileMenuOpen(false),
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "star",
+    className: "w-5 h-5 text-stone-400"
+  }), /*#__PURE__*/React.createElement("span", null, "Reviews")), /*#__PURE__*/React.createElement("a", {
+    href: "/track",
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "compass",
+    className: "w-5 h-5 text-stone-400"
+  }), /*#__PURE__*/React.createElement("span", null, "Track Order")), auth.authenticated && (auth.user.role === 'admin' || auth.user.role === 'kitchen_staff') && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "pt-4 pb-2"
+  }, /*#__PURE__*/React.createElement("p", {
+    className: "text-[10px] font-bold uppercase tracking-widest text-stone-400 px-3 pb-2"
+  }, "Staff Access")), /*#__PURE__*/React.createElement("a", {
+    href: "/kitchen",
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-amber-800 bg-amber-50/60 hover:bg-amber-50 text-sm transition border border-amber-100/60"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "chef-hat",
+    className: "w-5 h-5"
+  }), /*#__PURE__*/React.createElement("span", null, "Kitchen KDS")), auth.user.role === 'admin' && /*#__PURE__*/React.createElement("a", {
+    href: "/admin",
+    className: "flex items-center gap-3 px-3 py-3 rounded-xl text-orange-800 bg-orange-50/60 hover:bg-orange-50 text-sm transition border border-orange-100/60"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "shield",
+    className: "w-5 h-5"
+  }), /*#__PURE__*/React.createElement("span", null, "Admin Portal")))), /*#__PURE__*/React.createElement("div", {
+    className: "p-5 border-t border-stone-100 space-y-3 bg-stone-50/80"
+  }, auth.authenticated && /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIsMobileMenuOpen(false);
+      loadMyOrders();
+      setShowProfileModal(true);
+    },
+    className: "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-stone-200 text-sm font-medium text-stone-700 hover:bg-stone-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "user",
+    className: "w-4 h-4"
+  }), " Profile"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIsMobileMenuOpen(false);
+      handleLogout();
+    },
+    className: "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-stone-200 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "log-out",
+    className: "w-4 h-4"
+  }), " Log Out")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setIsMobileMenuOpen(false);
+      setIsCartOpen(true);
+    },
+    className: "w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-sm shadow-lg shadow-orange-600/20 transition active:scale-[0.98]"
+  }, /*#__PURE__*/React.createElement("i", {
+    "data-lucide": "shopping-bag",
+    className: "w-4 h-4"
+  }), "View Your Tray", totalCartItemsCount > 0 && /*#__PURE__*/React.createElement("span", {
+    className: "bg-white text-orange-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ml-1"
   }, totalCartItemsCount))))), /*#__PURE__*/React.createElement("section", {
     className: "relative bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950 text-white overflow-hidden py-20 lg:py-28"
   }, /*#__PURE__*/React.createElement("div", {
@@ -1224,7 +1379,9 @@ function App() {
     src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.985472851221!2d77.6406987!3d12.9727508!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae16a7eb2b851b%3A0x6b6459d8c8230538!2sIndiranagar%2C%20Bengaluru!5e0!3m2!1sen!2sin!4v1700000000000",
     width: "100%",
     height: "100%",
-    style: "border: 0;",
+    style: {
+      border: 0
+    },
     allowFullScreen: "",
     loading: "lazy",
     referrerPolicy: "no-referrer-when-downgrade"
@@ -1251,8 +1408,8 @@ function App() {
   }, "Terms & Conditions"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setLegalModal('refund'),
     className: "hover:text-white transition"
-  }, "Refund & Cancellation"), /*#__PURE__*/React.createElement("a", {
-    href: "/admin",
+  }, "Refund & Cancellation"), auth.authenticated && (auth.user.role === 'admin' || auth.user.role === 'kitchen_staff') && /*#__PURE__*/React.createElement("a", {
+    href: auth.user.role === 'admin' ? '/admin' : '/kitchen',
     className: "text-orange-500 hover:text-orange-400 font-semibold transition"
   }, "Staff & Admin Portal"))), /*#__PURE__*/React.createElement("div", {
     className: "border-t border-stone-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-stone-500"
@@ -1814,12 +1971,26 @@ function App() {
   }), /*#__PURE__*/React.createElement("span", null, toast.message)));
 }
 (function() {
-    const el = document.getElementById('root');
-    if (el) {
-        if (ReactDOM.createRoot) {
-            ReactDOM.createRoot(el).render(React.createElement(App, null));
-        } else {
-            ReactDOM.render(React.createElement(App, null), el);
+    function init() {
+        const el = document.getElementById('root');
+        if (!el) return;
+        try {
+            el.innerHTML = '';
+            if (typeof ReactDOM !== 'undefined' && ReactDOM.createRoot) {
+                ReactDOM.createRoot(el).render(React.createElement(App, null));
+            } else if (typeof ReactDOM !== 'undefined' && ReactDOM.render) {
+                ReactDOM.render(React.createElement(App, null), el);
+            } else {
+                console.error("ReactDOM is not available");
+            }
+        } catch (err) {
+            console.error("Error mounting App:", err);
+            el.innerHTML = '<div style="min-height:50vh;display:flex;align-items:center;justify-content:center;padding:2rem;text-align:center;font-family:sans-serif;"><div style="background:#fff;padding:2rem;border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,0.1);max-width:450px;"><h3 style="color:#dc2626;font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Initialization Error</h3><p style="color:#6b7280;font-size:0.875rem;margin-bottom:1rem;">' + (err.message || 'Unknown error') + '</p><button onclick="location.reload()" style="padding:0.6rem 1.2rem;background:#ea580c;color:white;border:none;border-radius:0.5rem;font-weight:600;cursor:pointer;">Reload Application</button></div></div>';
         }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();

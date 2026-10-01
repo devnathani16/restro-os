@@ -7,7 +7,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -83,14 +82,33 @@ class AuthController extends Controller
     public function quickLogin(Request $request)
     {
         $role = $request->input('role', 'customer');
-        $user = match($role) {
+        $user = match ($role) {
             'admin' => User::where('role', 'admin')->first(),
             'kitchen' => User::where('role', 'kitchen_staff')->first(),
             default => User::where('role', 'customer')->first(),
         };
 
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => "Demo user for role '{$role}' not found."], 404);
+        if (! $user) {
+            // Auto-recreate essential staff users if they were wiped
+            if ($role === 'admin') {
+                $user = User::create([
+                    'name' => 'Chef Vikram Anand',
+                    'email' => 'admin@spiceandhearth.com',
+                    'phone' => '+91 98000 12345',
+                    'role' => 'admin',
+                    'password' => Hash::make('password123'),
+                ]);
+            } elseif ($role === 'kitchen') {
+                $user = User::create([
+                    'name' => 'Chef Ananya Sharma',
+                    'email' => 'kitchen@spiceandhearth.com',
+                    'phone' => '+91 98000 54321',
+                    'role' => 'kitchen_staff',
+                    'password' => Hash::make('password123'),
+                ]);
+            } else {
+                return response()->json(['success' => false, 'message' => "Demo user for role '{$role}' not found."], 404);
+            }
         }
 
         Auth::login($user);
@@ -116,7 +134,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            AuditLog::record($user, 'logout', 'user', (string) $user->id, "User logged out");
+            AuditLog::record($user, 'logout', 'user', (string) $user->id, 'User logged out');
         }
 
         Auth::logout();
@@ -132,7 +150,7 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'authenticated' => false,
                 'user' => null,
@@ -155,20 +173,21 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
         }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'required|string|max:20',
             'preferences' => 'nullable|array',
             'current_password' => 'nullable|string',
-            'new_password' => 'nullable|string|min:6|confirmed',
+            'new_password' => 'nullable|string|min:6',
         ]);
 
-        if (!empty($validated['current_password']) && !empty($validated['new_password'])) {
-            if (!Hash::check($validated['current_password'], $user->password)) {
+        if (! empty($validated['current_password']) && ! empty($validated['new_password'])) {
+            if (! Hash::check($validated['current_password'], $user->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'The provided current password does not match.',
@@ -178,13 +197,14 @@ class AuthController extends Controller
         }
 
         $user->name = $validated['name'];
+        $user->email = $validated['email'];
         $user->phone = $validated['phone'];
         if (isset($validated['preferences'])) {
             $user->preferences = $validated['preferences'];
         }
         $user->save();
 
-        AuditLog::record($user, 'updated', 'user', (string) $user->id, "Customer updated profile details");
+        AuditLog::record($user, 'updated', 'user', (string) $user->id, 'Customer updated profile details');
 
         return response()->json([
             'success' => true,

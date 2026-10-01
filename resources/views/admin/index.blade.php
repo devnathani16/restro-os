@@ -10,6 +10,6 @@
 </div>
 
 @push('scripts')
-<script src="{{ asset('js/admin-app.js') }}?v={{ filemtime(public_path('js/admin-app.js')) }}"></script>
+<script src="/js/admin-app.js?v={{ filemtime(public_path('js/admin-app.js')) }}"></script>
 @endpush
 @endsection

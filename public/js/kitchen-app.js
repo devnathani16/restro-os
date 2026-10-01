@@ -4,10 +4,14 @@ const {
   useMemo
 } = React;
 function KitchenDisplay() {
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }, []);
   const [selectedDate, setSelectedDate] = useState(todayStr);
   const [activeSlots, setActiveSlots] = useState([]);
   const [rawOrders, setRawOrders] = useState([]);
+  const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -33,6 +37,7 @@ function KitchenDisplay() {
       if (data.success) {
         setActiveSlots(data.grouped_slots || []);
         setRawOrders(data.raw_orders || []);
+        if (data.restaurant) setRestaurant(data.restaurant);
       }
     }).catch(err => {
       setLoading(false);
@@ -42,6 +47,7 @@ function KitchenDisplay() {
 
   // Initial load + Polling every 8 seconds
   useEffect(() => {
+    setLoading(true);
     fetchKitchenOrders();
     const poll = setInterval(fetchKitchenOrders, 8000);
     return () => clearInterval(poll);
@@ -96,14 +102,18 @@ function KitchenDisplay() {
     className: "flex items-center gap-4"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2"
-  }, /*#__PURE__*/React.createElement("div", {
+  }, restaurant && restaurant.logo ? /*#__PURE__*/React.createElement("img", {
+    src: restaurant.logo,
+    alt: "Logo",
+    className: "w-10 h-10 rounded-xl object-cover"
+  }) : /*#__PURE__*/React.createElement("div", {
     className: "w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-bold text-lg text-white"
   }, /*#__PURE__*/React.createElement("i", {
     "data-lucide": "chef-hat",
     className: "w-6 h-6"
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
     className: "text-lg font-bold text-white tracking-wide"
-  }, "KITCHEN PREP DISPLAY"), /*#__PURE__*/React.createElement("p", {
+  }, restaurant ? restaurant.name.toUpperCase() : 'KITCHEN DISPLAY'), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-orange-400 font-mono"
   }, "Bistro Line Ops \u2022 Pre-Order Queue"))), /*#__PURE__*/React.createElement("div", {
     className: "hidden sm:flex items-center gap-2 bg-stone-950 px-4 py-2 rounded-xl border border-stone-800 font-mono text-xl font-bold text-amber-400"
@@ -126,7 +136,12 @@ function KitchenDisplay() {
     className: `px-3 py-2 rounded-xl font-bold border transition ${filterStatus === 'ready' ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300' : 'border-stone-850 text-stone-400'}`
   }, "Ready (", readyCount, ")")), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2"
-  }, /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: selectedDate,
+    onChange: e => setSelectedDate(e.target.value),
+    className: "bg-stone-950 border border-stone-800 text-stone-300 px-3 py-2 rounded-xl text-sm font-mono focus:outline-none focus:border-amber-500"
+  }), /*#__PURE__*/React.createElement("button", {
     onClick: () => setAudioEnabled(!audioEnabled),
     className: `p-2.5 rounded-xl border transition ${audioEnabled ? 'border-amber-500/60 bg-amber-500/20 text-amber-400' : 'border-stone-800 bg-stone-900 text-stone-500'}`,
     title: "Toggle Audio Chime"
@@ -252,12 +267,26 @@ function KitchenDisplay() {
   })));
 }
 (function() {
-    const el = document.getElementById('kitchen-root');
-    if (el) {
-        if (ReactDOM.createRoot) {
-            ReactDOM.createRoot(el).render(React.createElement(KitchenDisplay, null));
-        } else {
-            ReactDOM.render(React.createElement(KitchenDisplay, null), el);
+    function init() {
+        const el = document.getElementById('kitchen-root');
+        if (!el) return;
+        try {
+            el.innerHTML = '';
+            if (typeof ReactDOM !== 'undefined' && ReactDOM.createRoot) {
+                ReactDOM.createRoot(el).render(React.createElement(KitchenDisplay, null));
+            } else if (typeof ReactDOM !== 'undefined' && ReactDOM.render) {
+                ReactDOM.render(React.createElement(KitchenDisplay, null), el);
+            } else {
+                console.error("ReactDOM is not available");
+            }
+        } catch (err) {
+            console.error("Error mounting KitchenDisplay:", err);
+            el.innerHTML = '<div style="min-height:50vh;display:flex;align-items:center;justify-content:center;padding:2rem;text-align:center;font-family:sans-serif;"><div style="background:#fff;padding:2rem;border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,0.1);max-width:450px;"><h3 style="color:#dc2626;font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Initialization Error</h3><p style="color:#6b7280;font-size:0.875rem;margin-bottom:1rem;">' + (err.message || 'Unknown error') + '</p><button onclick="location.reload()" style="padding:0.6rem 1.2rem;background:#ea580c;color:white;border:none;border-radius:0.5rem;font-weight:600;cursor:pointer;">Reload Application</button></div></div>';
         }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();

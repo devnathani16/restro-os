@@ -47,7 +47,10 @@ function App() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     
     // Order Ahead Arrival Scheduling
-    const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+    const todayStr = useMemo(() => {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }, []);
     const [arrivalDate, setArrivalDate] = useState(todayStr);
     const [selectedSlotId, setSelectedSlotId] = useState(null);
     const [diningOption, setDiningOption] = useState('dine_in'); // 'dine_in' or 'takeaway'
@@ -79,6 +82,9 @@ function App() {
         setToast({ message, type });
         setTimeout(() => setToast(null), 4000);
     };
+
+    // Mobile Offcanvas Menu
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Legal / Policy Modal
     const [legalModal, setLegalModal] = useState(null); // 'privacy', 'terms', 'refund'
@@ -563,33 +569,6 @@ function App() {
 
     return (
         <div className="min-h-screen flex flex-col bg-stone-50">
-            {/* Quick Demo Switcher Banner (Essential for grading and multi-role testing) */}
-            <div className="bg-stone-900 text-stone-300 text-xs py-1.5 px-4 border-b border-stone-800 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                    <span className="flex h-2 w-2 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span className="font-medium text-stone-200">Live Production Preview Mode</span>
-                    <span className="hidden sm:inline text-stone-400">— Test 1-click roles:</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => handleQuickLogin('customer')} className="bg-stone-800 hover:bg-stone-700 text-orange-400 px-2.5 py-1 rounded text-xs font-medium transition border border-stone-700">
-                        Customer (Priya)
-                    </button>
-                    <button onClick={() => handleQuickLogin('kitchen')} className="bg-stone-800 hover:bg-stone-700 text-amber-400 px-2.5 py-1 rounded text-xs font-medium transition border border-stone-700">
-                        Kitchen Display Staff
-                    </button>
-                    <button onClick={() => handleQuickLogin('admin')} className="bg-orange-600 hover:bg-orange-500 text-white px-2.5 py-1 rounded text-xs font-medium transition shadow-sm">
-                        Admin Dashboard
-                    </button>
-                    {auth.authenticated && (
-                        <button onClick={handleLogout} className="text-stone-400 hover:text-white px-1.5 py-1 text-xs">
-                            Log out
-                        </button>
-                    )}
-                </div>
-            </div>
 
             {/* Navigation Header */}
             <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 transition-all shadow-sm">
@@ -620,15 +599,21 @@ function App() {
                         <a href="/track" className="hover:text-orange-600 transition flex items-center gap-1">
                             <i data-lucide="compass" className="w-3.5 h-3.5"></i> Track Order
                         </a>
-                        <a href="/login?intended=%2Fkitchen" className="hover:text-amber-700 transition flex items-center gap-1 text-xs px-2.5 py-1 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 font-medium">
-                            <i data-lucide="chef-hat" className="w-3.5 h-3.5"></i> Kitchen KDS
-                        </a>
-                        <a href="/login?intended=%2Fadmin" className="hover:text-orange-700 transition flex items-center gap-1 text-xs px-2.5 py-1 bg-orange-50 text-orange-800 rounded-lg border border-orange-200 font-medium">
-                            <i data-lucide="shield" className="w-3.5 h-3.5"></i> Admin Portal
-                        </a>
+                        {auth.authenticated && (auth.user.role === 'admin' || auth.user.role === 'kitchen_staff') && (
+                            <>
+                                <a href="/kitchen" className="hover:text-amber-700 transition flex items-center gap-1 text-xs px-2.5 py-1 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 font-medium">
+                                    <i data-lucide="chef-hat" className="w-3.5 h-3.5"></i> Kitchen KDS
+                                </a>
+                                {auth.user.role === 'admin' && (
+                                    <a href="/admin" className="hover:text-orange-700 transition flex items-center gap-1 text-xs px-2.5 py-1 bg-orange-50 text-orange-800 rounded-lg border border-orange-200 font-medium">
+                                        <i data-lucide="shield" className="w-3.5 h-3.5"></i> Admin Portal
+                                    </a>
+                                )}
+                            </>
+                        )}
                     </nav>
 
-                    {/* Actions: Account & Cart */}
+                    {/* Actions: Account, Cart & Hamburger */}
                     <div className="flex items-center gap-3">
                         {auth.authenticated ? (
                             <button onClick={() => { loadMyOrders(); setShowProfileModal(true); }} className="flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-800 px-3.5 py-2 rounded-full text-sm font-medium transition">
@@ -636,7 +621,7 @@ function App() {
                                 <span className="hidden sm:inline">{auth.user.name.split(' ')[0]}</span>
                             </button>
                         ) : (
-                            <button onClick={() => { setAuthMode('login'); setShowAuthModal(true); }} className="text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-2">
+                            <button onClick={() => { setAuthMode('login'); setShowAuthModal(true); }} className="hidden sm:inline-flex text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-2">
                                 Sign In
                             </button>
                         )}
@@ -651,9 +636,167 @@ function App() {
                                 </span>
                             )}
                         </button>
+
+                        {/* Hamburger Button (Mobile Only) */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition active:scale-95"
+                            aria-label="Open navigation menu"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </header>
+
+            {/* Mobile Offcanvas Navigation */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    {/* Backdrop overlay with blur */}
+                    <div
+                        className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        style={{ animation: 'fadeIn 0.2s ease-out' }}
+                    ></div>
+
+                    {/* Offcanvas Panel */}
+                    <div
+                        className="absolute top-0 right-0 h-full w-[85%] max-w-sm bg-white/95 backdrop-blur-xl shadow-2xl flex flex-col"
+                        style={{ animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                    >
+                        {/* Offcanvas Header */}
+                        <div className="flex items-center justify-between p-5 border-b border-stone-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-orange-100 flex items-center justify-center">
+                                    <img src={restaurant.logo || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=200&q=80"} alt="Logo" className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                    <span className="text-base font-serif font-bold text-stone-900 block leading-tight">
+                                        {restaurant.name || 'Spice & Hearth Bistro'}
+                                    </span>
+                                    <span className="text-[10px] text-orange-600 font-medium tracking-wide">Pre-Order & Dine</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="w-9 h-9 rounded-xl bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-600 transition"
+                                aria-label="Close menu"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Auth Status Card */}
+                        <div className="px-5 pt-4">
+                            {auth.authenticated ? (
+                                <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50 border border-orange-100">
+                                    <div className="w-10 h-10 rounded-full bg-orange-600 flex items-center justify-center text-white font-bold text-sm">
+                                        {auth.user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-stone-900 truncate">{auth.user.name}</p>
+                                        <p className="text-xs text-stone-500 truncate">{auth.user.email}</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => { setIsMobileMenuOpen(false); setAuthMode('login'); setShowAuthModal(true); }}
+                                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 hover:border-orange-200 transition"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                                        <i data-lucide="user-plus" className="w-5 h-5"></i>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-sm font-semibold text-stone-900">Sign In / Register</p>
+                                        <p className="text-xs text-stone-500">Track orders & earn rewards</p>
+                                    </div>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Navigation Links */}
+                        <nav className="flex-1 overflow-y-auto px-5 pt-5 pb-4 space-y-1">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 px-3 pb-2">Navigate</p>
+
+                            <a href="#order-ahead" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-xl text-orange-600 bg-orange-50 font-semibold text-sm transition hover:bg-orange-100">
+                                <i data-lucide="calendar-clock" className="w-5 h-5"></i>
+                                <span>Order Ahead</span>
+                                <span className="ml-auto bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
+                            </a>
+                            <a href="#menu" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition">
+                                <i data-lucide="utensils-crossed" className="w-5 h-5 text-stone-400"></i>
+                                <span>Food Menu</span>
+                            </a>
+                            <a href="#story" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition">
+                                <i data-lucide="book-open" className="w-5 h-5 text-stone-400"></i>
+                                <span>Our Craft</span>
+                            </a>
+                            <a href="#reviews" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition">
+                                <i data-lucide="star" className="w-5 h-5 text-stone-400"></i>
+                                <span>Reviews</span>
+                            </a>
+                            <a href="/track" className="flex items-center gap-3 px-3 py-3 rounded-xl text-stone-700 hover:bg-stone-50 text-sm transition">
+                                <i data-lucide="compass" className="w-5 h-5 text-stone-400"></i>
+                                <span>Track Order</span>
+                            </a>
+
+                            {auth.authenticated && (auth.user.role === 'admin' || auth.user.role === 'kitchen_staff') && (
+                                <>
+                                    <div className="pt-4 pb-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 px-3 pb-2">Staff Access</p>
+                                    </div>
+                                    <a href="/kitchen" className="flex items-center gap-3 px-3 py-3 rounded-xl text-amber-800 bg-amber-50/60 hover:bg-amber-50 text-sm transition border border-amber-100/60">
+                                        <i data-lucide="chef-hat" className="w-5 h-5"></i>
+                                        <span>Kitchen KDS</span>
+                                    </a>
+                                    {auth.user.role === 'admin' && (
+                                        <a href="/admin" className="flex items-center gap-3 px-3 py-3 rounded-xl text-orange-800 bg-orange-50/60 hover:bg-orange-50 text-sm transition border border-orange-100/60">
+                                            <i data-lucide="shield" className="w-5 h-5"></i>
+                                            <span>Admin Portal</span>
+                                        </a>
+                                    )}
+                                </>
+                            )}
+                        </nav>
+
+                        {/* Offcanvas Footer Actions */}
+                        <div className="p-5 border-t border-stone-100 space-y-3 bg-stone-50/80">
+                            {auth.authenticated && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => { setIsMobileMenuOpen(false); loadMyOrders(); setShowProfileModal(true); }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-stone-200 text-sm font-medium text-stone-700 hover:bg-stone-50 transition"
+                                    >
+                                        <i data-lucide="user" className="w-4 h-4"></i> Profile
+                                    </button>
+                                    <button
+                                        onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border border-stone-200 text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                                    >
+                                        <i data-lucide="log-out" className="w-4 h-4"></i> Log Out
+                                    </button>
+                                </div>
+                            )}
+                            <button
+                                onClick={() => { setIsMobileMenuOpen(false); setIsCartOpen(true); }}
+                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-sm shadow-lg shadow-orange-600/20 transition active:scale-[0.98]"
+                            >
+                                <i data-lucide="shopping-bag" className="w-4 h-4"></i>
+                                View Your Tray
+                                {totalCartItemsCount > 0 && (
+                                    <span className="bg-white text-orange-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ml-1">
+                                        {totalCartItemsCount}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <section className="relative bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950 text-white overflow-hidden py-20 lg:py-28">
@@ -1188,7 +1331,7 @@ function App() {
                                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.985472851221!2d77.6406987!3d12.9727508!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae16a7eb2b851b%3A0x6b6459d8c8230538!2sIndiranagar%2C%20Bengaluru!5e0!3m2!1sen!2sin!4v1700000000000"
                                 width="100%"
                                 height="100%"
-                                style="border: 0;"
+                                style={{ border: 0 }}
                                 allowFullScreen=""
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"
@@ -1216,7 +1359,9 @@ function App() {
                             <button onClick={() => setLegalModal('privacy')} className="hover:text-white transition">Privacy Policy</button>
                             <button onClick={() => setLegalModal('terms')} className="hover:text-white transition">Terms & Conditions</button>
                             <button onClick={() => setLegalModal('refund')} className="hover:text-white transition">Refund & Cancellation</button>
-                            <a href="/admin" className="text-orange-500 hover:text-orange-400 font-semibold transition">Staff & Admin Portal</a>
+                        {auth.authenticated && (auth.user.role === 'admin' || auth.user.role === 'kitchen_staff') && (
+                            <a href={auth.user.role === 'admin' ? '/admin' : '/kitchen'} className="text-orange-500 hover:text-orange-400 font-semibold transition">Staff & Admin Portal</a>
+                        )}
                         </div>
                     </div>
 

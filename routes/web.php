@@ -21,31 +21,46 @@ use Illuminate\Support\Facades\Route;
 // Customer Front-End
 Route::get('/', function () {
     $restaurant = Restaurant::first();
+
     return view('customer.index', compact('restaurant'));
 })->name('home');
 
 Route::get('/track/{orderNumber?}', function ($orderNumber = null) {
     $restaurant = Restaurant::first();
+
     return view('customer.track', compact('restaurant', 'orderNumber'));
 })->name('track');
 
 // Kitchen Display System Portal
 Route::get('/kitchen', function () {
-    if (!Auth::check() || !Auth::user()->isKitchen()) {
-        return redirect('/login?intended=' . urlencode('/kitchen'))->with('error', 'Kitchen access requires authorized staff login.');
+    if (! Auth::check() || ! Auth::user()->isKitchen()) {
+        return redirect('/login?intended='.urlencode('/kitchen'))->with('error', 'Kitchen access requires authorized staff login.');
     }
     $restaurant = Restaurant::first();
+
     return view('kitchen.index', compact('restaurant'));
 })->name('kitchen');
 
 // Admin Management Portal
 Route::get('/admin/{section?}', function ($section = 'dashboard') {
-    if (!Auth::check() || !Auth::user()->isAdmin()) {
-        return redirect('/login?intended=' . urlencode('/admin/' . $section))->with('error', 'Administrator login required.');
+    if (! Auth::check() || ! Auth::user()->isAdmin()) {
+        return redirect('/login?intended='.urlencode('/admin/'.$section))->with('error', 'Administrator login required.');
     }
     $restaurant = Restaurant::first();
+
     return view('admin.index', compact('restaurant', 'section'));
 })->where('section', '.*')->name('admin');
+
+// Dedicated Secret Admin Login Page
+Route::get('/'.env('ADMIN_LOGIN_PATH', 'secret-admin-login'), function (Request $request) {
+    $intended = $request->query('intended', '/admin');
+    if (Auth::check() && Auth::user()->isAdmin()) {
+        return redirect($intended);
+    }
+    $restaurant = Restaurant::first();
+
+    return view('auth.admin-login', compact('restaurant', 'intended'));
+})->name('admin.secret_login');
 
 // Dedicated Authentication Page
 Route::get('/login', function (Request $request) {
@@ -54,6 +69,7 @@ Route::get('/login', function (Request $request) {
         return redirect($intended);
     }
     $restaurant = Restaurant::first();
+
     return view('auth.login', compact('restaurant', 'intended'));
 })->name('login');
 
@@ -134,6 +150,7 @@ Route::prefix('api')->group(function () {
         Route::put('/coupons/{id}', [AdminController::class, 'updateCoupon']);
         Route::delete('/coupons/{id}', [AdminController::class, 'deleteCoupon']);
         Route::get('/customers', [AdminController::class, 'customers']);
+        Route::post('/customers/{id}/role', [AdminController::class, 'updateUserRole']);
         Route::get('/analytics', [AdminController::class, 'analytics']);
         Route::get('/audit-logs', [AdminController::class, 'auditLogs']);
         Route::get('/settings', [AdminController::class, 'settings']);
@@ -150,14 +167,15 @@ Route::get('/sitemap.xml', function () {
     $restaurant = Restaurant::first();
     $xml = '<?xml version="1.0" encoding="UTF-8"?>';
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-    $xml .= '<url><loc>' . url('/') . '</loc><changefreq>daily</changefreq><priority>1.0</priority></url>';
-    $xml .= '<url><loc>' . url('/track') . '</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>';
+    $xml .= '<url><loc>'.url('/').'</loc><changefreq>daily</changefreq><priority>1.0</priority></url>';
+    $xml .= '<url><loc>'.url('/track').'</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>';
     $xml .= '</urlset>';
 
     return response($xml, 200)->header('Content-Type', 'text/xml');
 });
 
 Route::get('/robots.txt', function () {
-    $content = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /kitchen\nDisallow: /api/\nSitemap: " . url('/sitemap.xml') . "\n";
+    $content = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /kitchen\nDisallow: /api/\nSitemap: ".url('/sitemap.xml')."\n";
+
     return response($content, 200)->header('Content-Type', 'text/plain');
 });

@@ -14,6 +14,6 @@
 </script>
 
 @push('scripts')
-<script src="{{ asset('js/track-app.js') }}?v={{ filemtime(public_path('js/track-app.js')) }}"></script>
+<script src="/js/track-app.js?v={{ filemtime(public_path('js/track-app.js')) }}"></script>
 @endpush
 @endsection

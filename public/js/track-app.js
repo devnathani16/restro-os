@@ -291,12 +291,26 @@ function OrderTracker() {
   }, cancelling ? 'Cancelling...' : 'Confirm Cancellation'))))));
 }
 (function() {
-    const el = document.getElementById('track-root');
-    if (el) {
-        if (ReactDOM.createRoot) {
-            ReactDOM.createRoot(el).render(React.createElement(OrderTracker, null));
-        } else {
-            ReactDOM.render(React.createElement(OrderTracker, null), el);
+    function init() {
+        const el = document.getElementById('track-root');
+        if (!el) return;
+        try {
+            el.innerHTML = '';
+            if (typeof ReactDOM !== 'undefined' && ReactDOM.createRoot) {
+                ReactDOM.createRoot(el).render(React.createElement(OrderTracker, null));
+            } else if (typeof ReactDOM !== 'undefined' && ReactDOM.render) {
+                ReactDOM.render(React.createElement(OrderTracker, null), el);
+            } else {
+                console.error("ReactDOM is not available");
+            }
+        } catch (err) {
+            console.error("Error mounting OrderTracker:", err);
+            el.innerHTML = '<div style="min-height:50vh;display:flex;align-items:center;justify-content:center;padding:2rem;text-align:center;font-family:sans-serif;"><div style="background:#fff;padding:2rem;border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,0.1);max-width:450px;"><h3 style="color:#dc2626;font-size:1.25rem;font-weight:700;margin-bottom:0.5rem;">Initialization Error</h3><p style="color:#6b7280;font-size:0.875rem;margin-bottom:1rem;">' + (err.message || 'Unknown error') + '</p><button onclick="location.reload()" style="padding:0.6rem 1.2rem;background:#ea580c;color:white;border:none;border-radius:0.5rem;font-weight:600;cursor:pointer;">Reload Application</button></div></div>';
         }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();

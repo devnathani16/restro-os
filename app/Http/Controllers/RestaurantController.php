@@ -18,47 +18,51 @@ class RestaurantController extends Controller
 {
     public function getPublicData(Request $request)
     {
-        $restaurant = Restaurant::first();
-        if (!$restaurant) {
-            $restaurant = Restaurant::create(['name' => 'Spice & Hearth Bistro']);
-        }
+        $data = \Illuminate\Support\Facades\Cache::remember('public_restaurant_data', 600, function () {
+            $restaurant = Restaurant::first();
+            if (!$restaurant) {
+                $restaurant = Restaurant::create(['name' => 'Spice & Hearth Bistro']);
+            }
 
-        $categories = Category::where('active', true)
-            ->orderBy('display_order')
-            ->with(['menuItems' => function ($query) {
-                $query->where('available', true)
-                      ->orderBy('display_order')
-                      ->with(['customizationGroups.options' => function ($q) {
-                          $q->where('available', true)->orderBy('display_order');
-                      }]);
-            }])
-            ->get();
+            $categories = Category::where('active', true)
+                ->orderBy('display_order')
+                ->with(['menuItems' => function ($query) {
+                    $query->where('available', true)
+                          ->orderBy('display_order')
+                          ->with(['customizationGroups.options' => function ($q) {
+                              $q->where('available', true)->orderBy('display_order');
+                          }]);
+                }])
+                ->get();
 
-        $featuredItems = MenuItem::where('available', true)
-            ->where('featured', true)
-            ->with(['customizationGroups.options'])
-            ->take(6)
-            ->get();
+            $featuredItems = MenuItem::where('available', true)
+                ->where('featured', true)
+                ->with(['customizationGroups.options'])
+                ->take(6)
+                ->get();
 
-        $popularItems = MenuItem::where('available', true)
-            ->where('popular', true)
-            ->with(['customizationGroups.options'])
-            ->take(6)
-            ->get();
+            $popularItems = MenuItem::where('available', true)
+                ->where('popular', true)
+                ->with(['customizationGroups.options'])
+                ->take(6)
+                ->get();
 
-        $hours = RestaurantHour::orderBy('day_number')->get();
-        $timeSlots = TimeSlot::where('active', true)->orderBy('start_time')->get();
-        $reviews = Review::where('is_featured', true)->latest()->take(8)->get();
+            $hours = RestaurantHour::orderBy('day_number')->get();
+            $timeSlots = TimeSlot::where('active', true)->orderBy('start_time')->get();
+            $reviews = Review::where('is_featured', true)->latest()->take(8)->get();
 
-        return response()->json([
-            'restaurant' => $restaurant,
-            'categories' => $categories,
-            'featured_items' => $featuredItems,
-            'popular_items' => $popularItems,
-            'hours' => $hours,
-            'time_slots' => $timeSlots,
-            'reviews' => $reviews,
-        ]);
+            return [
+                'restaurant' => $restaurant->toArray(),
+                'categories' => $categories->toArray(),
+                'featured_items' => $featuredItems->toArray(),
+                'popular_items' => $popularItems->toArray(),
+                'hours' => $hours->toArray(),
+                'time_slots' => $timeSlots->toArray(),
+                'reviews' => $reviews->toArray(),
+            ];
+        });
+
+        return response()->json($data);
     }
 
     public function checkSlotAvailability(Request $request)

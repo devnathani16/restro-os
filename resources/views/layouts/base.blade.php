@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        // Patch DOM methods for React + Lucide compatibility.
+        // Lucide's createIcons() replaces <i> elements with <svg> in the real DOM,
+        // causing React's reconciler to fail when it tries to remove/update the original nodes.
+        (function() {
+            var _removeChild = Node.prototype.removeChild;
+            Node.prototype.removeChild = function(child) {
+                if (child.parentNode !== this) {
+                    return child;
+                }
+                return _removeChild.apply(this, arguments);
+            };
+            var _insertBefore = Node.prototype.insertBefore;
+            Node.prototype.insertBefore = function(newNode, refNode) {
+                if (refNode && refNode.parentNode !== this) {
+                    return newNode;
+                }
+                return _insertBefore.apply(this, arguments);
+            };
+        })();
+    </script>
+    <script src="/error-logger.js"></script>
     
     <title>@yield('title', 'Spice & Hearth Bistro | Order Ahead & Dine Without Waiting')</title>
     <meta name="description" content="@yield('meta_description', 'Pre-order authentic woodfired pizzas, clay oven kebabs, and slow-dum biryanis in advance. Select your exact arrival time and skip the waiting line.')">
@@ -53,11 +75,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="/vendor/lucide.min.js"></script>
 
-    <!-- Tailwind CSS with custom configuration -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS -->
+    <script src="/vendor/tailwindcss.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -92,11 +113,12 @@
         }
     </script>
 
-    <!-- React 18 & ReactDOM 18 from CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- React 18 & ReactDOM 18 -->
+    <script src="/vendor/react.production.min.js"></script>
+    <script src="/vendor/react-dom.production.min.js"></script>
+    
     <!-- Chart.js for analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/vendor/chart.min.js"></script>
 
     <style>
         body {
@@ -129,6 +151,19 @@
         .animate-pulse-subtle {
             animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+        /* Mobile offcanvas animations */
+        @@keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @@keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        @@keyframes slideInLeft {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
     </style>
 
     @php
@@ -154,16 +189,19 @@
         // Global fetch interceptor: injects CSRF token and ngrok bypass header on all AJAX calls
         const _nativeFetch = window.fetch;
         window.fetch = function(url, options = {}) {
-            options = options || {};
-            options.headers = options.headers || {};
-            if (typeof options.headers.set === 'function') {
+            options = Object.assign({}, options);
+            if (options.headers instanceof Headers) {
                 options.headers.set('ngrok-skip-browser-warning', 'true');
                 if (window.__CSRF_TOKEN__) options.headers.set('X-CSRF-TOKEN', window.__CSRF_TOKEN__);
             } else {
-                options.headers['ngrok-skip-browser-warning'] = 'true';
-                if (window.__CSRF_TOKEN__) options.headers['X-CSRF-TOKEN'] = window.__CSRF_TOKEN__;
+                options.headers = Object.assign({}, options.headers, {
+                    'ngrok-skip-browser-warning': 'true'
+                });
+                if (window.__CSRF_TOKEN__) {
+                    options.headers['X-CSRF-TOKEN'] = window.__CSRF_TOKEN__;
+                }
             }
-            return _nativeFetch(url, options);
+            return _nativeFetch.call(window, url, options);
         };
     </script>
 </head>

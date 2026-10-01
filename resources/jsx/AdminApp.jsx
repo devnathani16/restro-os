@@ -77,6 +77,9 @@ function AdminApp() {
     const [settingsForm, setSettingsForm] = useState(null);
     const [settingsSaving, setSettingsSaving] = useState(false);
 
+    // Mobile Sidebar
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     // Load Tab Data
     useEffect(() => {
         if (currentTab === 'dashboard') loadDashboard();
@@ -412,68 +415,166 @@ function AdminApp() {
             }
         });
     };
+    const adminNavItems = [
+        { key: 'dashboard', label: 'Executive Overview', icon: 'layout-dashboard' },
+        { key: 'orders', label: 'Order Management', icon: 'clipboard-list' },
+        { key: 'menu', label: 'Menu & Dishes', icon: 'utensils' },
+        { key: 'categories', label: 'Food Categories', icon: 'folder-tree' },
+        { key: 'groups', label: 'Customization Groups', icon: 'sliders' },
+        { key: 'coupons', label: 'Coupons & Promos', icon: 'tag' },
+        { key: 'customers', label: 'Customer Directory', icon: 'users' },
+        { key: 'analytics', label: 'Sales & Analytics', icon: 'trending-up' },
+        { key: 'audit', label: 'Security Audit Log', icon: 'shield-alert' },
+        { key: 'settings', label: 'Restaurant Settings', icon: 'settings' },
+        { key: 'profile', label: 'My Account', icon: 'user' },
+    ];
 
     return (
-        <div className="min-h-screen bg-stone-100 flex flex-col md:flex-row font-sans">
-            {/* Admin Sidebar Navigation */}
-            <aside className="w-full md:w-64 bg-stone-900 text-stone-300 flex-shrink-0 flex flex-col justify-between border-r border-stone-800">
-                <div>
-                    {/* Header */}
-                    <div className="p-5 border-b border-stone-800 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center font-bold text-white text-base">
-                                S
-                            </div>
-                            <div>
-                                <h2 className="text-sm font-bold text-white tracking-wide">ADMIN CONSOLE</h2>
-                                <p className="text-[11px] text-stone-400">Spice & Hearth Operations</p>
-                            </div>
+        <div className="h-screen bg-stone-100 flex flex-col font-sans overflow-hidden">
+            {/* Mobile Top Bar (visible < md) */}
+            <header className="flex-shrink-0 z-40 md:hidden bg-stone-900 border-b border-stone-800 shadow-lg">
+                <div className="flex items-center justify-between px-4 h-16">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-orange-600 flex items-center justify-center font-bold text-white text-sm">
+                            S
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-white tracking-wide leading-tight">ADMIN CONSOLE</h2>
+                            <p className="text-[10px] text-stone-400">Spice & Hearth Operations</p>
                         </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-stone-400 font-medium bg-stone-800 px-2 py-1 rounded-lg capitalize">{currentTab}</span>
+                        <button
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="flex items-center justify-center w-10 h-10 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 transition active:scale-95 border border-stone-700"
+                            aria-label="Open navigation menu"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
 
-                    {/* Navigation Menu */}
-                    <nav className="p-3 space-y-1 text-xs font-semibold">
-                        {[
-                            { key: 'dashboard', label: 'Executive Overview', icon: 'layout-dashboard' },
-                            { key: 'orders', label: 'Order Management', icon: 'clipboard-list' },
-                            { key: 'menu', label: 'Menu & Dishes', icon: 'utensils' },
-                            { key: 'categories', label: 'Food Categories', icon: 'folder-tree' },
-                            { key: 'groups', label: 'Customization Groups', icon: 'sliders' },
-                            { key: 'coupons', label: 'Coupons & Promos', icon: 'tag' },
-                            { key: 'customers', label: 'Customer Directory', icon: 'users' },
-                            { key: 'analytics', label: 'Sales & Analytics', icon: 'trending-up' },
-                            { key: 'audit', label: 'Security Audit Log', icon: 'shield-alert' },
-                            { key: 'settings', label: 'Restaurant Settings', icon: 'settings' },
-                        ].map(item => (
+            {/* Mobile Offcanvas Sidebar */}
+            {isSidebarOpen && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setIsSidebarOpen(false)}
+                        style={{ animation: 'fadeIn 0.2s ease-out' }}
+                    ></div>
+
+                    {/* Slide-in Panel */}
+                    <div
+                        className="absolute top-0 left-0 h-full w-[85%] max-w-xs bg-stone-900 text-stone-300 flex flex-col shadow-2xl"
+                        style={{ animation: 'slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                    >
+                        {/* Offcanvas Header */}
+                        <div className="p-5 border-b border-stone-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center font-bold text-white text-base">
+                                    S
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-bold text-white tracking-wide">ADMIN CONSOLE</h2>
+                                    <p className="text-[11px] text-stone-400">Spice & Hearth Operations</p>
+                                </div>
+                            </div>
                             <button
-                                key={item.key}
-                                onClick={() => setCurrentTab(item.key)}
-                                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition ${currentTab === item.key ? 'bg-orange-600 text-white shadow-md' : 'text-stone-400 hover:text-white hover:bg-stone-800/80'}`}
+                                onClick={() => setIsSidebarOpen(false)}
+                                className="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 flex items-center justify-center text-stone-400 transition"
+                                aria-label="Close menu"
                             >
-                                <i data-lucide={item.icon} className="w-4 h-4 flex-shrink-0"></i>
-                                <span>{item.label}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                             </button>
-                        ))}
-                    </nav>
-                </div>
+                        </div>
 
-                {/* Bottom Quick Links */}
-                <div className="p-4 border-t border-stone-800 space-y-2 text-xs">
-                    <a href="/kitchen" className="flex items-center justify-between p-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 font-semibold transition border border-stone-700">
-                        <span className="flex items-center gap-2">
-                            <i data-lucide="tv" className="w-4 h-4"></i> Kitchen Display
-                        </span>
-                        <i data-lucide="external-link" className="w-3.5 h-3.5"></i>
-                    </a>
-                    <a href="/" className="flex items-center justify-between p-2 text-stone-400 hover:text-white transition">
-                        <span>Customer Website</span>
-                        <i data-lucide="arrow-up-right" className="w-3.5 h-3.5"></i>
-                    </a>
-                </div>
-            </aside>
+                        {/* Navigation Menu */}
+                        <nav className="flex-1 overflow-y-auto p-3 space-y-1 text-xs font-semibold">
+                            {adminNavItems.map(item => (
+                                <button
+                                    key={item.key}
+                                    onClick={() => { setCurrentTab(item.key); setIsSidebarOpen(false); }}
+                                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition ${currentTab === item.key ? 'bg-orange-600 text-white shadow-md' : 'text-stone-400 hover:text-white hover:bg-stone-800/80'}`}
+                                >
+                                    <i data-lucide={item.icon} className="w-4 h-4 flex-shrink-0"></i>
+                                    <span>{item.label}</span>
+                                </button>
+                            ))}
+                        </nav>
 
-            {/* Main Admin Content Stage */}
-            <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
+                        {/* Bottom Quick Links */}
+                        <div className="p-4 border-t border-stone-800 space-y-2 text-xs">
+                            <a href="/kitchen" className="flex items-center justify-between p-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 font-semibold transition border border-stone-700">
+                                <span className="flex items-center gap-2">
+                                    <i data-lucide="tv" className="w-4 h-4"></i> Kitchen Display
+                                </span>
+                                <i data-lucide="external-link" className="w-3.5 h-3.5"></i>
+                            </a>
+                            <a href="/" className="flex items-center justify-between p-2 text-stone-400 hover:text-white transition">
+                                <span>Customer Website</span>
+                                <i data-lucide="arrow-up-right" className="w-3.5 h-3.5"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                {/* Desktop Sidebar (hidden on mobile) */}
+                <aside className="hidden md:flex w-64 bg-stone-900 text-stone-300 flex-shrink-0 flex-col justify-between border-r border-stone-800 overflow-y-auto">
+                    <div>
+                        {/* Header */}
+                        <div className="p-5 border-b border-stone-800 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center font-bold text-white text-base">
+                                    S
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-bold text-white tracking-wide">ADMIN CONSOLE</h2>
+                                    <p className="text-[11px] text-stone-400">Spice & Hearth Operations</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Navigation Menu */}
+                        <nav className="p-3 space-y-1 text-xs font-semibold">
+                            {adminNavItems.map(item => (
+                                <button
+                                    key={item.key}
+                                    onClick={() => setCurrentTab(item.key)}
+                                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition ${currentTab === item.key ? 'bg-orange-600 text-white shadow-md' : 'text-stone-400 hover:text-white hover:bg-stone-800/80'}`}
+                                >
+                                    <i data-lucide={item.icon} className="w-4 h-4 flex-shrink-0"></i>
+                                    <span>{item.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
+
+                    {/* Bottom Quick Links */}
+                    <div className="p-4 border-t border-stone-800 space-y-2 text-xs">
+                        <a href="/kitchen" className="flex items-center justify-between p-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 font-semibold transition border border-stone-700">
+                            <span className="flex items-center gap-2">
+                                <i data-lucide="tv" className="w-4 h-4"></i> Kitchen Display
+                            </span>
+                            <i data-lucide="external-link" className="w-3.5 h-3.5"></i>
+                        </a>
+                        <a href="/" className="flex items-center justify-between p-2 text-stone-400 hover:text-white transition">
+                            <span>Customer Website</span>
+                            <i data-lucide="arrow-up-right" className="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                </aside>
+
+                {/* Main Admin Content Stage */}
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 {/* 1. DASHBOARD OVERVIEW */}
                 {currentTab === 'dashboard' && (
                     <div className="space-y-6">
@@ -1438,20 +1539,19 @@ function AdminApp() {
                 {currentTab === 'customers' && (
                     <div className="space-y-6">
                         <div>
-                            <h1 className="text-2xl font-serif font-bold text-stone-900">Customer Management</h1>
-                            <p className="text-xs text-stone-500">Registered diners, order history, and lifetime spending</p>
+                            <h1 className="text-2xl font-serif font-bold text-stone-900">User Management</h1>
+                            <p className="text-xs text-stone-500">Registered diners, staff members, and order history</p>
                         </div>
 
                         <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
                             <table className="w-full text-left text-xs">
                                 <thead className="bg-stone-50 border-b border-stone-200 text-stone-500 font-bold uppercase tracking-wider">
                                     <tr>
-                                        <th className="p-4">Customer Name</th>
+                                        <th className="p-4">Name</th>
                                         <th className="p-4">Email</th>
                                         <th className="p-4">Phone</th>
-                                        <th className="p-4">Total Orders</th>
                                         <th className="p-4">Total Spending</th>
-                                        <th className="p-4">Member Since</th>
+                                        <th className="p-4">System Role</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-stone-100 text-stone-700">
@@ -1460,9 +1560,40 @@ function AdminApp() {
                                             <td className="p-4 font-bold text-stone-900">{cust.name}</td>
                                             <td className="p-4 text-stone-600">{cust.email}</td>
                                             <td className="p-4 text-stone-600">{cust.phone || 'N/A'}</td>
-                                            <td className="p-4 font-semibold">{cust.orders_count || 0} orders</td>
                                             <td className="p-4 font-bold text-orange-600">₹{cust.orders_sum_final_total || 0}</td>
-                                            <td className="p-4 text-stone-400">{new Date(cust.created_at).toLocaleDateString()}</td>
+                                            <td className="p-4">
+                                                <select 
+                                                    value={cust.role}
+                                                    onChange={(e) => {
+                                                        const newRole = e.target.value;
+                                                        if (confirm(`Are you sure you want to change ${cust.name}'s role to ${newRole}?`)) {
+                                                            fetch(`/api/admin/customers/${cust.id}/role`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'X-CSRF-TOKEN': window.__CSRF_TOKEN__,
+                                                                    'Accept': 'application/json'
+                                                                },
+                                                                body: JSON.stringify({ role: newRole })
+                                                            })
+                                                            .then(res => res.json())
+                                                            .then(data => {
+                                                                if (data.success) {
+                                                                    notify(`User role updated successfully.`);
+                                                                    loadCustomers();
+                                                                } else {
+                                                                    alert(data.message || 'Failed to update role.');
+                                                                }
+                                                            });
+                                                        }
+                                                    }}
+                                                    className={`px-2 py-1 rounded border text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-500 ${cust.role === 'admin' ? 'bg-orange-100 text-orange-800 border-orange-200' : cust.role === 'kitchen_staff' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-stone-100 text-stone-600 border-stone-200'}`}
+                                                >
+                                                    <option value="customer">Customer</option>
+                                                    <option value="kitchen_staff">Kitchen Staff</option>
+                                                    <option value="admin">Administrator</option>
+                                                </select>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -1557,6 +1688,8 @@ function AdminApp() {
                             <p className="text-xs text-stone-500">Configure operating hours, time slot limits, lead times, and taxes</p>
                         </div>
 
+
+
                         <form onSubmit={handleSettingsSubmit} className="space-y-6 text-xs">
                             {/* General Info */}
                             <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-4">
@@ -1598,6 +1731,26 @@ function AdminApp() {
                                             className="w-full px-3 py-2 border rounded-xl"
                                         />
                                     </div>
+                                </div>
+                                <div className="mt-4">
+                                    <label className="block font-bold text-stone-700 mb-1">Logo URL (Leave blank for default)</label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://example.com/logo.png"
+                                        value={settingsForm.logo || ''}
+                                        onChange={(e) => setSettingsForm({ ...settingsForm, logo: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-xl"
+                                    />
+                                </div>
+                                <div className="mt-4">
+                                    <label className="block font-bold text-stone-700 mb-1">Restaurant Description</label>
+                                    <textarea
+                                        value={settingsForm.description || ''}
+                                        onChange={(e) => setSettingsForm({ ...settingsForm, description: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-xl"
+                                        rows="3"
+                                        placeholder="Enter a brief description about your restaurant..."
+                                    ></textarea>
                                 </div>
                             </div>
 
@@ -1666,6 +1819,42 @@ function AdminApp() {
                                     </label>
                                 </div>
                             </div>
+                            {/* Time Slots */}
+                            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-4">
+                                <h3 className="text-sm font-bold text-stone-900 uppercase">Arrival Time Slots & Kitchen Capacity</h3>
+                                <p className="text-stone-500 mb-4">Set the maximum number of orders your kitchen can handle during each 30-minute arrival window. Disable slots during off-hours.</p>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                                    {settingsForm.time_slots && settingsForm.time_slots.map((slot, idx) => (
+                                        <div key={slot.id} className={`p-3 rounded-xl border ${slot.active ? 'border-orange-300 bg-orange-50' : 'border-stone-200 bg-stone-100 opacity-60'}`}>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-bold text-stone-900">{slot.start_time.substring(0,5)}</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={slot.active}
+                                                    onChange={(e) => {
+                                                        const newSlots = [...settingsForm.time_slots];
+                                                        newSlots[idx].active = e.target.checked;
+                                                        setSettingsForm({ ...settingsForm, time_slots: newSlots });
+                                                    }}
+                                                    className="rounded text-orange-600"
+                                                />
+                                            </div>
+                                            <label className="text-[10px] uppercase font-bold text-stone-500 block mb-1">Max Orders</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={slot.maximum_orders}
+                                                onChange={(e) => {
+                                                    const newSlots = [...settingsForm.time_slots];
+                                                    newSlots[idx].maximum_orders = parseInt(e.target.value) || 1;
+                                                    setSettingsForm({ ...settingsForm, time_slots: newSlots });
+                                                }}
+                                                className="w-full px-2 py-1 text-sm border rounded bg-white"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
 
                             {/* Submit Button */}
                             <div className="flex justify-end">
@@ -1680,7 +1869,77 @@ function AdminApp() {
                         </form>
                     </div>
                 )}
+
+                {/* MY ACCOUNT */}
+                {currentTab === 'profile' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h1 className="text-2xl font-serif font-bold text-stone-900">My Account</h1>
+                            <p className="text-xs text-stone-500">Update your administrator credentials</p>
+                        </div>
+
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const form = e.target;
+                            fetch('/api/auth/profile', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': window.__CSRF_TOKEN__,
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    name: form.name.value,
+                                    email: form.email.value,
+                                    phone: form.phone.value,
+                                    new_password: form.new_password.value,
+                                    current_password: form.current_password.value
+                                })
+                            }).then(res => res.json()).then(data => {
+                                if(data.success) {
+                                    notify('Admin credentials updated successfully!');
+                                    form.current_password.value = '';
+                                    form.new_password.value = '';
+                                } else {
+                                    alert(data.message || 'Failed to update credentials.');
+                                }
+                            });
+                        }} className="space-y-6 text-xs mb-8">
+                            <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-4">
+                                <h3 className="text-sm font-bold text-stone-900 uppercase">Your Credentials</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block font-bold text-stone-700 mb-1">Your Name</label>
+                                        <input name="name" type="text" defaultValue="Chef Vikram Anand" required className="w-full px-3 py-2 border border-stone-300 rounded-xl" />
+                                    </div>
+                                    <div>
+                                        <label className="block font-bold text-stone-700 mb-1">Login Email</label>
+                                        <input name="email" type="email" defaultValue="admin@spiceandhearth.com" required className="w-full px-3 py-2 border border-stone-300 rounded-xl" />
+                                    </div>
+                                    <div>
+                                        <label className="block font-bold text-stone-700 mb-1">Phone</label>
+                                        <input name="phone" type="text" defaultValue="+91 98000 12345" required className="w-full px-3 py-2 border border-stone-300 rounded-xl" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-stone-200 mt-4">
+                                    <div>
+                                        <label className="block font-bold text-stone-700 mb-1">Current Password <span className="text-stone-400 font-normal">(required to change password)</span></label>
+                                        <input name="current_password" type="password" placeholder="Enter current password" className="w-full px-3 py-2 border border-stone-300 rounded-xl" />
+                                    </div>
+                                    <div>
+                                        <label className="block font-bold text-stone-700 mb-1">New Password <span className="text-stone-400 font-normal">(optional)</span></label>
+                                        <input name="new_password" type="password" placeholder="Enter new password" className="w-full px-3 py-2 border border-stone-300 rounded-xl" />
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <button type="submit" className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-bold transition shadow">Update Account</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                )}
             </main>
+            </div>
 
             {/* Notification Toast */}
             {toast && (

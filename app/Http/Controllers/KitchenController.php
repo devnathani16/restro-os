@@ -49,6 +49,7 @@ class KitchenController extends Controller
             'active_count' => $orders->count(),
             'grouped_slots' => array_values($grouped),
             'raw_orders' => $orders,
+            'restaurant' => \App\Models\Restaurant::first(),
         ]);
     }
 
@@ -84,6 +85,8 @@ class KitchenController extends Controller
 
         AuditLog::record($user, 'status_changed', 'order', (string) $order->id, "Kitchen started preparing order {$order->order_number}");
 
+        try { \Illuminate\Support\Facades\Redis::publish('kds.orders', json_encode(['event' => 'StatusUpdate', 'order_id' => $order->id, 'status' => 'preparing'])); } catch (\Exception $e) {}
+
         return response()->json([
             'success' => true,
             'message' => "Order {$order->order_number} marked as PREPARING.",
@@ -115,6 +118,8 @@ class KitchenController extends Controller
         }
 
         AuditLog::record($user, 'status_changed', 'order', (string) $order->id, "Kitchen marked order {$order->order_number} as READY");
+
+        try { \Illuminate\Support\Facades\Redis::publish('kds.orders', json_encode(['event' => 'StatusUpdate', 'order_id' => $order->id, 'status' => 'ready'])); } catch (\Exception $e) {}
 
         return response()->json([
             'success' => true,
@@ -151,6 +156,8 @@ class KitchenController extends Controller
         }
 
         AuditLog::record($user, 'status_changed', 'order', (string) $order->id, "Order {$order->order_number} marked as COMPLETED");
+
+        try { \Illuminate\Support\Facades\Redis::publish('kds.orders', json_encode(['event' => 'StatusUpdate', 'order_id' => $order->id, 'status' => 'completed'])); } catch (\Exception $e) {}
 
         return response()->json([
             'success' => true,
